@@ -1,5 +1,5 @@
 import { Get, Path, Query, Route } from "tsoa";
-import { HttpError } from "../models/httpError.ts/index";
+import { NotImplemented } from "../models/httpError.ts/index";
 
 interface ApiResponse<T> {
   status: number;
@@ -26,7 +26,7 @@ export default class ContentController {
     @Path() id: number,
     @Query() editmode?: boolean
   ): Promise<ApiResponse<Content>> {
-    throw new HttpError({ statusCode: 404 });
+    throw new NotImplemented();
   }
 
   @Get("{id}/children")
@@ -34,24 +34,21 @@ export default class ContentController {
     @Path() id: number,
     @Query() editmode?: boolean
   ): Promise<ApiResponse<ContentResponse[] | null>> {
-    throw new HttpError({ statusCode: 400 });
+    throw new NotImplemented();
   }
 
   @Get("/pages")
   public async allPages(
     @Query() editmode?: boolean
   ): Promise<ApiResponse<ContentResponse[] | null>> {
-    return {
-      status: 200,
-      body: [],
-    };
+    throw new NotImplemented();
   }
 
   @Get("/pages/tree")
   public async allPagesAsTree(
     @Query() editmode?: boolean
   ): Promise<ApiResponse<GetPagesTreeResponseBody>> {
-    return { status: 200, body: { tree: 123, count: 1337 } };
+    throw new NotImplemented();
   }
 
   @Get("/pages/{id}")
@@ -59,8 +56,7 @@ export default class ContentController {
     @Path() id: number,
     @Query() editmode?: boolean
   ): Promise<ContentResponse[] | null> {
-    if (id !== 3) return null;
-    return [{ message: 3 }];
+    throw new NotImplemented();
   }
 
   @Get("/pages/{id}/children")
@@ -68,6 +64,6 @@ export default class ContentController {
     @Path() id: number,
     @Query() editmode?: boolean
   ): Promise<ContentResponse[] | null> {
-    return [];
+    throw new NotImplemented();
   }
 }
