@@ -1,5 +1,5 @@
 import express, { Application } from "express";
-import { loggerMiddleware } from "./middlewares/logger";
+import { loggerMiddleware } from "./middlewares/logger.middleware";
 import swaggerUi from "swagger-ui-express";
 import Router from "./routes";
 import { errorHandler } from "./middlewares/errorHandler";

@@ -1,6 +1,6 @@
 import express, { Response, Request, NextFunction } from "express";
 import { ValidateError } from "tsoa";
-import { HttpError } from "../models/httpError.ts/index";
+import { HttpError } from "../models/http.error.ts/index";
 
 export function errorHandler(
   error: any,
@@ -19,6 +19,7 @@ export function errorHandler(
     return res.status(error.statusCode).send(error);
   }
   if (error instanceof Error) {
+    console.error(error);
     return res.status(500).json({
       message: "Internal Server Error",
       details: error.toString(),

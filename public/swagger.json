@@ -18,44 +18,35 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"Content": {
+			"ApiResponse_any_": {
 				"properties": {
-					"message": {
+					"status": {
 						"type": "number",
 						"format": "double"
-					}
+					},
+					"body": {}
 				},
 				"required": [
-					"message"
+					"status",
+					"body"
 				],
 				"type": "object",
 				"additionalProperties": false
 			},
-			"ApiResponse_Content_": {
+			"ApiResponse_any-Array_": {
 				"properties": {
 					"status": {
 						"type": "number",
 						"format": "double"
 					},
 					"body": {
-						"$ref": "#/components/schemas/Content"
+						"items": {},
+						"type": "array"
 					}
 				},
 				"required": [
-					"status"
-				],
-				"type": "object",
-				"additionalProperties": false
-			},
-			"ContentResponse": {
-				"properties": {
-					"message": {
-						"type": "number",
-						"format": "double"
-					}
-				},
-				"required": [
-					"message"
+					"status",
+					"body"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -95,7 +86,7 @@
 				"parameters": []
 			}
 		},
-		"/api/content/{id}": {
+		"/content/{id}": {
 			"get": {
 				"operationId": "GetContent",
 				"responses": {
@@ -104,7 +95,7 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/ApiResponse_Content_"
+									"$ref": "#/components/schemas/ApiResponse_any_"
 								}
 							}
 						}
@@ -132,7 +123,7 @@
 				]
 			}
 		},
-		"/api/content/{id}/children": {
+		"/content/{id}/children": {
 			"get": {
 				"operationId": "GetContentChildren",
 				"responses": {
@@ -141,11 +132,7 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"items": {
-										"$ref": "#/components/schemas/ContentResponse"
-									},
-									"type": "array",
-									"nullable": true
+									"$ref": "#/components/schemas/ApiResponse_any-Array_"
 								}
 							}
 						}
@@ -173,7 +160,7 @@
 				]
 			}
 		},
-		"/api/content/pages": {
+		"/content/pages": {
 			"get": {
 				"operationId": "AllPages",
 				"responses": {
@@ -182,11 +169,7 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"items": {
-										"$ref": "#/components/schemas/ContentResponse"
-									},
-									"type": "array",
-									"nullable": true
+									"$ref": "#/components/schemas/ApiResponse_any_"
 								}
 							}
 						}
@@ -205,7 +188,7 @@
 				]
 			}
 		},
-		"/api/content/pages/tree": {
+		"/content/pages/tree": {
 			"get": {
 				"operationId": "AllPagesAsTree",
 				"responses": {
@@ -214,11 +197,7 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"items": {
-										"$ref": "#/components/schemas/ContentResponse"
-									},
-									"type": "array",
-									"nullable": true
+									"$ref": "#/components/schemas/ApiResponse_any_"
 								}
 							}
 						}
@@ -237,7 +216,7 @@
 				]
 			}
 		},
-		"/api/content/pages/{id}": {
+		"/content/pages/{id}": {
 			"get": {
 				"operationId": "GetPage",
 				"responses": {
@@ -245,13 +224,7 @@
 						"description": "Ok",
 						"content": {
 							"application/json": {
-								"schema": {
-									"items": {
-										"$ref": "#/components/schemas/ContentResponse"
-									},
-									"type": "array",
-									"nullable": true
-								}
+								"schema": {}
 							}
 						}
 					}
@@ -278,7 +251,7 @@
 				]
 			}
 		},
-		"/api/content/pages/{id}/children": {
+		"/content/pages/{id}/children": {
 			"get": {
 				"operationId": "GetPageChildren",
 				"responses": {
@@ -286,13 +259,7 @@
 						"description": "Ok",
 						"content": {
 							"application/json": {
-								"schema": {
-									"items": {
-										"$ref": "#/components/schemas/ContentResponse"
-									},
-									"type": "array",
-									"nullable": true
-								}
+								"schema": {}
 							}
 						}
 					}
@@ -317,6 +284,23 @@
 						}
 					}
 				]
+			}
+		},
+		"/content/sites": {
+			"get": {
+				"operationId": "GetWebsites",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {}
+							}
+						}
+					}
+				},
+				"security": [],
+				"parameters": []
 			}
 		}
 	},
