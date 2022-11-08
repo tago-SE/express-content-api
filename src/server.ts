@@ -1,8 +1,8 @@
-import express, { Application } from "express";
-import { loggerMiddleware } from "./middlewares/logger.middleware";
-import swaggerUi from "swagger-ui-express";
-import Router from "./routes";
-import { errorHandler } from "./middlewares/errorHandler";
+import { default as express, Application } from "express";
+import { default as swaggerUi } from "swagger-ui-express";
+import { router } from "./routes/index.js";
+import { loggerMiddleware } from "./middlewares/logger.middleware.js";
+import { errorHandler } from "./middlewares/errorHandler.js";
 
 const PORT = process.env.PORT || 8000;
 
@@ -21,7 +21,7 @@ app.use(
     },
   })
 );
-app.use(Router);
+app.use(router);
 app.use(errorHandler);
 
 app.listen(PORT, () => {

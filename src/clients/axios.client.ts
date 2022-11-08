@@ -1,12 +1,11 @@
-import { removeTrailingSlashes } from "../utils/strings/removeTrailingSlashes";
 import axios, {
-  AxiosError,
   AxiosInstance,
   AxiosRequestConfig,
   AxiosResponse,
-  AxiosRequestHeaders,
   CreateAxiosDefaults,
 } from "axios";
+import { sleep } from "../utils/sleep.js";
+import { removeTrailingSlashes } from "../utils/strings/removeTrailingSlashes.js";
 
 interface ConstructorOptions extends CreateAxiosDefaults<any> {
   baseURL: string;
@@ -37,22 +36,18 @@ export class HttpClient {
     return this.axios.request(config);
   }
 
-  get<T = any, R = AxiosResponse<T>>(
+  async get<T = any, R = AxiosResponse<T>>(
     url: string,
     config?: AxiosRequestConfig
   ): Promise<R> {
     return this.axios.get<T, R>(url, config);
   }
 
-  
-
   post<T = any, R = AxiosResponse<T>>(
     url: string,
     data?: T,
     config?: AxiosRequestConfig
   ): Promise<R> {
-    const key = url.replace("/", ".");
-
     return this.axios.post<T, R>(url, data, config);
   }
 
@@ -73,7 +68,7 @@ export class HttpClient {
   }
 
   delete<T = any, R = AxiosResponse<T>>(
-    url: string,
+    url: string, 
     config?: AxiosRequestConfig
   ): Promise<R> {
     return this.axios.delete<T, R>(url, config);

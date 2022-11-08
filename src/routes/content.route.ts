@@ -1,6 +1,6 @@
-import express from "express";
-import ContentController from "../controllers/content.controller";
-import { stringToBoolean } from "../utils/strings/stringToBool";
+import { default as express } from "express";
+import { ContentController } from "../controllers/content.controller.js";
+import { stringToBoolean } from "../utils/strings/stringToBool.js";
 
 const router = express.Router();
 
@@ -71,4 +71,4 @@ router.get("/pages/:id/children", async (req, res, next) => {
   return res.send(response);
 });
 
-export default router;
+export { router as contentRouter };

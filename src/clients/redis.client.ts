@@ -8,13 +8,8 @@ const redisClient = redis.createClient({
   url,
 });
 
+console.log("Running redis.client.ts");
 redisClient.connect();
-
-class RedisCache {
-  readonly redisClient = redis.createClient({
-    url,
-  });
-}
 
 redisClient.on("connect", function () {
   console.info(name + ": connecting...");
@@ -42,3 +37,4 @@ process.on("SIGINT", function () {
 });
 
 export { redisClient };
+

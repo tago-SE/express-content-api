@@ -1,9 +1,6 @@
 import { Get, Path, Query, Route } from "tsoa";
-import { NotImplemented } from "../models/http.error.ts/index";
-import { CmsService } from "../services/cms.service";
-
-const host = "https://dev.prod.cms.developer.if-insurance.com/// ";
-const cmsService = new CmsService({ host });
+import { NotImplemented } from "../models/http.error/index.js";
+import { cmsService } from "../services/cms.service.js";
 
 interface ApiResponse<T> {
   status: number;
@@ -24,7 +21,7 @@ interface GetPagesTreeResponseBody {
 }
 
 @Route("/content")
-export default class ContentController {
+export class ContentController {
   @Get("{id}")
   public async getContent(
     @Path() id: number,

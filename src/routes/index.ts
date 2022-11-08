@@ -1,6 +1,6 @@
-import express, { Router } from "express";
-import PingController from "../controllers/ping";
-import ContentRoute from "./content.route";
+import { default as express, Router } from "express";
+import { PingController } from "../controllers/ping.js";
+import { contentRouter } from "./content.route.js";
 
 export interface ResourceRoute {
   readonly router: Router;
@@ -16,6 +16,6 @@ router.get("/ping", async (_req, res) => {
   return res.send(response);
 });
 
-router.use("/content", ContentRoute);
+router.use("/content", contentRouter);
 
-export default router;
+export { router };
