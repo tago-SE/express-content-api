@@ -33,7 +33,7 @@ const getContentOptionsToQueryParams = (options?: GetContentOptions) => {
   return "?" + new URLSearchParams(query).toString();
 };
 
-const myRedisCache = new RedisCache({ ttl: 7 * 24 * 60 * 60 });
+const myRedisCache = new RedisCache({ ttl: 1 * 24 * 60 * 60 });
 
 export class CmsService {
   public readonly config: Config;
@@ -55,7 +55,7 @@ export class CmsService {
 
   private getCacheKey(url: string) {
     const _url = new URL(this.config.host + url);
-    return _url.hostname + _url.pathname + _url.search + "11_";
+    return _url.hostname + _url.pathname + _url.search;
   }
 
   private async handleSuccess(res: AxiosResponse<any, any>) {
