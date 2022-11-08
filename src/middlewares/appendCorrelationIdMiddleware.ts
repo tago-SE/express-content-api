@@ -11,7 +11,6 @@ export function appendCorrelationIdMiddleware(
   const existingCorrelationId = req.query[QueryTag];
   if (!existingCorrelationId || typeof existingCorrelationId !== "string") {
     const id = v4();
-    console.log("Corr", id);
     req.query[QueryTag] = id;
   }
   next();
