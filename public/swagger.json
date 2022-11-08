@@ -188,9 +188,9 @@
 				]
 			}
 		},
-		"/content/pages/tree": {
+		"/content/pages/{id}/tree": {
 			"get": {
-				"operationId": "AllPagesAsTree",
+				"operationId": "GetPageTree",
 				"responses": {
 					"200": {
 						"description": "Ok",
@@ -205,6 +205,15 @@
 				},
 				"security": [],
 				"parameters": [
+					{
+						"in": "path",
+						"name": "id",
+						"required": true,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					},
 					{
 						"in": "query",
 						"name": "editmode",

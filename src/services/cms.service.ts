@@ -21,6 +21,11 @@ export interface GetContentOptions {
   expand?: boolean;
 }
 
+export interface PageTree {
+  data: any | null;
+  children: PageTree[];
+}
+
 const BackgroundExpirationTimeInSeconds = 15;
 
 const getContentOptionsToQueryParams = (options?: GetContentOptions) => {
@@ -33,11 +38,21 @@ const getContentOptionsToQueryParams = (options?: GetContentOptions) => {
   return "?" + new URLSearchParams(query).toString();
 };
 
+const throttle = pThrottle({
+  limit: 10,
+  interval: 1000,
+});
+
 const myRedisCache = new RedisCache({ ttl: 1 * 24 * 60 * 60 });
+
+const isPage = (content: any) => {
+  if (!content) return false;
+  return content.contentType[0] === "Page";
+};
 
 export class CmsService {
   public readonly config: Config;
-  private httpClient: HttpClient;
+  private readonly httpClient: HttpClient;
 
   constructor(config: Config) {
     this.config = {
@@ -58,7 +73,7 @@ export class CmsService {
     return _url.hostname + _url.pathname + _url.search;
   }
 
-  private async handleSuccess(res: AxiosResponse<any, any>) {
+  private async _handleSuccess(res: AxiosResponse<any, any>) {
     try {
       const key = this.getCacheKey(res.config.url || "");
       const saveResult = await myRedisCache.set(key, res.data);
@@ -71,17 +86,38 @@ export class CmsService {
     return res.data;
   }
 
-  private async handleError(error: AxiosError<any>) {
+  private _isCmsErrorResponse(response: AxiosResponse<any, any>) {
+    // TODO: Ensure that the body has the properties that we seek
+    // e.g code, message, details
+  }
+
+  private async _handleError(error: AxiosError<any>) {
     console.error(error.toString());
     if (error.isAxiosError) {
       const requestConfig = error.config as AxiosRequestConfig<any>;
       const key = this.getCacheKey(requestConfig.url || "");
       if (!!error.response && !!error.response.status) {
         const responseStatus = error.response.status;
-        if (responseStatus >= 400 && responseStatus <= 404) {
-          // Error codes between 400-404 cause the underlying data to be considered as removed
-          await myRedisCache.set(key, null);
-          return Promise.resolve(null);
+        const { ["content-type"]: headerContentType } = error.response.headers;
+        // How to better ensure that it is being removed for the correct reason
+        if (headerContentType?.includes("application/json")) {
+          if (responseStatus >= 400 && responseStatus <= 404) {
+            // Error codes between 400-404 cause the underlying data to be considered as removed
+            const saveResult = await myRedisCache.set(key, null);
+            if (saveResult) {
+              console.log("Removed", key);
+            }
+            return Promise.resolve(null);
+          }
+        } else {
+          console.warn(
+            "The error could not be parsed properly. Perhaps the server is down?"
+          );
+          console.log(
+            error.response.status,
+            error.response.data,
+            error.response.headers
+          );
         }
       }
       const cachedResult = await myRedisCache.get(key);
@@ -90,17 +126,17 @@ export class CmsService {
     return Promise.reject(error);
   }
 
-  private async handleGetRequest(url: string) {
+  private async _handleGetRequest(url: string) {
     return this.httpClient
       .get(url)
-      .then((res) => this.handleSuccess(res))
-      .catch((error) => this.handleError(error));
+      .then((res) => this._handleSuccess(res))
+      .catch((error) => this._handleError(error));
   }
 
-  private checkExpiration(savedAt: Date, expirationTimeInSeconds: number) {
+  private _checkExpiration(savedAt: Date, expirationTimeInSeconds: number) {
     if (!savedAt)
       return {
-        hasExpired: false,
+        hasExpired: true,
         elapsed: 0,
       };
     const elapsed = Math.abs(
@@ -116,17 +152,21 @@ export class CmsService {
     const key = this.getCacheKey(url);
     const cacheResult = await myRedisCache.get(key);
     if (!cacheResult.cacheHit) {
-      return this.handleGetRequest(url);
+      return this._handleGetRequest(url);
     }
-    const { hasExpired, elapsed } = this.checkExpiration(
+    const { hasExpired, elapsed } = this._checkExpiration(
       cacheResult.meta?.savedAt as Date,
       BackgroundExpirationTimeInSeconds
     );
     if (hasExpired) {
       console.log(`Expired after ${elapsed}s : ${key}`);
       setImmediate(async () => {
-        await myRedisCache.set(key, cacheResult.value); // touch timestamp to prevent spam
-        await this.handleGetRequest(url);
+        try {
+          await myRedisCache.set(key, cacheResult.value); // touch timestamp to prevent spam
+          await throttle(() => this._handleGetRequest(url))();
+        } catch (error) {
+          console.error(error);
+        }
       });
     } else {
       console.log("Hit", key);
@@ -155,22 +195,40 @@ export class CmsService {
     return this.readThroughGetRequest(url);
   }
 
-  public async getContentTree(rootPageId: number, options?: GetContentOptions) {
-    const root = await this.getContent(rootPageId);
-    console.log("ROOT", root);
-    let q = [root];
-    while (q.length > 0) {
-      const children = this.getContentChildren(root.contentLink.id, options);
-      // TODO
+  public async getPageTree(rootPageId: number, options?: GetContentOptions) {
+    console.log(rootPageId, options);
+    const rootContent = [await this.getContent(rootPageId, options)].find(
+      isPage
+    );
+    const root: PageTree = {
+      data: rootContent || null,
+      children: [],
+    };
+    if (root.data) {
+      let q = [root];
+      while (q.length > 0) {
+        const node = q.pop() as PageTree;
+        const children = (
+          await this.getContentChildren(node.data.contentLink.id, options)
+        ).filter(isPage);
+        node.children = children.map((childContent: any) => ({
+          data: childContent,
+          children: [],
+        }));
+        for (let child of node.children) {
+          q.push(child);
+        }
+      }
     }
+    return root;
   }
 
   public async getWebsites() {
     const url = "/api/episerver/" + this.config.version + "/site";
     return this.httpClient
       .get(url)
-      .then((res) => this.handleSuccess(res))
-      .catch((error) => this.handleError(error));
+      .then((res) => this._handleSuccess(res))
+      .catch((error) => this._handleError(error));
   }
 }
 

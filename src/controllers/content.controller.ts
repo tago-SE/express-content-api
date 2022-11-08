@@ -48,11 +48,16 @@ export class ContentController {
     throw new NotImplemented();
   }
 
-  @Get("/pages/tree")
-  public async allPagesAsTree(
+  @Get("/pages/{id}/tree")
+  public async getPageTree(
+    @Path() id: number,
     @Query() editmode?: boolean
   ): Promise<ApiResponse<any>> {
-    throw new NotImplemented();
+    const content = await cmsService.getPageTree(id, { editmode });
+    return {
+      status: !!content.data && content.children.length > 0 ? 200 : 404,
+      body: content,
+    };
   }
 
   @Get("/pages/{id}")
