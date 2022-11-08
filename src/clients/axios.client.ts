@@ -4,7 +4,6 @@ import axios, {
   AxiosResponse,
   CreateAxiosDefaults,
 } from "axios";
-import { sleep } from "../utils/sleep.js";
 import { removeTrailingSlashes } from "../utils/strings/removeTrailingSlashes.js";
 
 interface ConstructorOptions extends CreateAxiosDefaults<any> {
@@ -68,7 +67,7 @@ export class HttpClient {
   }
 
   delete<T = any, R = AxiosResponse<T>>(
-    url: string, 
+    url: string,
     config?: AxiosRequestConfig
   ): Promise<R> {
     return this.axios.delete<T, R>(url, config);
