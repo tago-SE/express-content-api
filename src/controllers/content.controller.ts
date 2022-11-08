@@ -1,5 +1,4 @@
 import { Get, Path, Query, Route } from "tsoa";
-import { NotImplemented } from "../models/http.error/index.js";
 import {
   cmsService,
   GetPageTreeAsArray,
@@ -8,7 +7,10 @@ import {
 
 interface ApiResponse<T> {
   status: number;
-  body: T;
+  body: {
+    data: T;
+    correlationId?: string;
+  };
 }
 
 @Route("/content")
@@ -20,7 +22,7 @@ export class ContentController {
     @Query() correlationId?: string
   ): Promise<ApiResponse<any>> {
     const result = await cmsService.getContent(id, { editmode, correlationId });
-    return { status: 200, body: result };
+    return { status: !!result ? 200 : 404, body: result };
   }
 
   @Get("{id}/children")
@@ -29,18 +31,14 @@ export class ContentController {
     @Query() editmode?: boolean,
     @Query() correlationId?: string
   ): Promise<ApiResponse<any[]>> {
-    const content = await cmsService.getContentChildren(id, {
+    const result = await cmsService.getContentChildren(id, {
       editmode,
       correlationId,
     });
-    return { status: 200, body: content };
-  }
-
-  @Get("/pages")
-  public async allPages(
-    @Query() editmode?: boolean
-  ): Promise<ApiResponse<any>> {
-    throw new NotImplemented();
+    return {
+      status: !!result && result.length > 0 ? 200 : 404,
+      body: { data: result, correlationId },
+    };
   }
 
   @Get("/pages/{id}/tree")
@@ -55,7 +53,7 @@ export class ContentController {
     });
     return {
       status: result.count > 0 ? 200 : 404,
-      body: result,
+      body: { data: result, correlationId },
     };
   }
 
@@ -71,7 +69,7 @@ export class ContentController {
     });
     return {
       status: result.count > 0 ? 200 : 404,
-      body: result,
+      body: { data: result, correlationId },
     };
   }
 
@@ -80,8 +78,15 @@ export class ContentController {
     @Path() id: number,
     @Query() editmode?: boolean,
     @Query() correlationId?: string
-  ): Promise<any> {
-    throw new NotImplemented();
+  ): Promise<ApiResponse<any>> {
+    const result = await cmsService.getPage(id, {
+      editmode,
+      correlationId,
+    });
+    return {
+      status: !!result ? 200 : 404,
+      body: { data: result, correlationId },
+    };
   }
 
   @Get("/pages/{id}/children")
@@ -89,13 +94,25 @@ export class ContentController {
     @Path() id: number,
     @Query() editmode?: boolean,
     @Query() correlationId?: string
-  ): Promise<any> {
-    throw new NotImplemented();
+  ): Promise<ApiResponse<any[]>> {
+    const result = await cmsService.getPageChildren(id, {
+      editmode,
+      correlationId,
+    });
+    return {
+      status: !!result && result.length > 0 ? 200 : 404,
+      body: { data: result, correlationId },
+    };
   }
 
   @Get("sites")
-  public async getWebsites(): Promise<any> {
+  public async getWebsites(
+    @Query() correlationId?: string
+  ): Promise<ApiResponse<any[]>> {
     const result = await cmsService.getWebsites();
-    return { status: 200, body: result };
+    return {
+      status: !!result && result.length > 0 ? 200 : 404,
+      body: { data: result, correlationId },
+    };
   }
 }

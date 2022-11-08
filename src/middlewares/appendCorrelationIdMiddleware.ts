@@ -10,8 +10,8 @@ export function appendCorrelationIdMiddleware(
 ): Response | void {
   const existingCorrelationId = req.query[QueryTag];
   if (!existingCorrelationId || typeof existingCorrelationId !== "string") {
-    const id = v4();
-    req.query[QueryTag] = id;
+    const uuid = v4();
+    req.query[QueryTag] = uuid;
   }
   next();
 }

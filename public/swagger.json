@@ -24,7 +24,18 @@
 						"type": "number",
 						"format": "double"
 					},
-					"body": {}
+					"body": {
+						"properties": {
+							"correlationId": {
+								"type": "string"
+							},
+							"data": {}
+						},
+						"required": [
+							"data"
+						],
+						"type": "object"
+					}
 				},
 				"required": [
 					"status",
@@ -40,8 +51,19 @@
 						"format": "double"
 					},
 					"body": {
-						"items": {},
-						"type": "array"
+						"properties": {
+							"correlationId": {
+								"type": "string"
+							},
+							"data": {
+								"items": {},
+								"type": "array"
+							}
+						},
+						"required": [
+							"data"
+						],
+						"type": "object"
 					}
 				},
 				"required": [
@@ -94,7 +116,18 @@
 						"format": "double"
 					},
 					"body": {
-						"$ref": "#/components/schemas/GetPageTreeResponse"
+						"properties": {
+							"correlationId": {
+								"type": "string"
+							},
+							"data": {
+								"$ref": "#/components/schemas/GetPageTreeResponse"
+							}
+						},
+						"required": [
+							"data"
+						],
+						"type": "object"
 					}
 				},
 				"required": [
@@ -129,7 +162,18 @@
 						"format": "double"
 					},
 					"body": {
-						"$ref": "#/components/schemas/GetPageTreeAsArray"
+						"properties": {
+							"correlationId": {
+								"type": "string"
+							},
+							"data": {
+								"$ref": "#/components/schemas/GetPageTreeAsArray"
+							}
+						},
+						"required": [
+							"data"
+						],
+						"type": "object"
 					}
 				},
 				"required": [
@@ -259,34 +303,6 @@
 						"required": false,
 						"schema": {
 							"type": "string"
-						}
-					}
-				]
-			}
-		},
-		"/content/pages": {
-			"get": {
-				"operationId": "AllPages",
-				"responses": {
-					"200": {
-						"description": "Ok",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/ApiResponse_any_"
-								}
-							}
-						}
-					}
-				},
-				"security": [],
-				"parameters": [
-					{
-						"in": "query",
-						"name": "editmode",
-						"required": false,
-						"schema": {
-							"type": "boolean"
 						}
 					}
 				]
@@ -482,7 +498,16 @@
 					}
 				},
 				"security": [],
-				"parameters": []
+				"parameters": [
+					{
+						"in": "query",
+						"name": "correlationId",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
 			}
 		}
 	},

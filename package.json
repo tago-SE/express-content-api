@@ -1,13 +1,13 @@
 {
   "name": "express-content-api",
   "version": "1.0.0",
-  "main": "server.ts",
+  "main": "app.ts",
   "repository": "https://github.com/tago-SE/express-content-api.git",
   "author": "Tiago Redaelli <tiago.redaelli@if.se>",
   "license": "UNLICENSED",
   "type": "module",
   "scripts": {
-    "start": "node .build/server.js",
+    "start": "node .build/app.js",
     "predev": "yarn swagger",
     "prebuild": "yarn swagger",
     "build": "tsc",
@@ -19,7 +19,7 @@
       "src"
     ],
     "ext": "ts",
-    "exec": "ts-node src/server.ts"
+    "exec": "ts-node src/app.ts"
   },
   "dependencies": {
     "axios": "^1.1.3",

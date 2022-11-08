@@ -1,10 +1,10 @@
 import pThrottle from "p-throttle";
 import { AxiosError, AxiosRequestConfig, AxiosResponse } from "axios";
 import { differenceInSeconds } from "date-fns";
-
 import { removeTrailingSlashes } from "../utils/strings/removeTrailingSlashes.js";
 import { HttpClient } from "../clients/axios.client.js";
 import { RedisCache } from "./cache/RedisCache.js";
+import { getRandomInt } from "../utils/random/getRandomInt.js";
 
 const EXPAND_QUERY_KEY = "expand";
 const EDITMODE_QUERY_KEY = "epieditmode";
@@ -83,20 +83,6 @@ export class CmsService {
     return _url.hostname + _url.pathname + _url.search;
   }
 
-  private async _handleSuccess(
-    res: AxiosResponse<any, any>,
-    correlationId?: string
-  ) {
-    try {
-      const key = this.getCacheKey(res.config.url || "");
-      const saveResult = await myRedisCache.set(key, res.data);
-      if (saveResult) console.log(`[${correlationId}] Saved`, key);
-    } catch (error) {
-      console.error(error);
-    }
-    return res.data;
-  }
-
   private _shouldRemoveOnError(response: AxiosResponse<any, any>) {
     // TODO: Check if the error response view model matches what is sent from EPI Server CMS rather
     // than checking the content-type of the header etc
@@ -144,6 +130,20 @@ export class CmsService {
     return Promise.reject(error);
   }
 
+  private async _handleSuccess(
+    res: AxiosResponse<any, any>,
+    correlationId?: string
+  ) {
+    try {
+      const key = this.getCacheKey(res.config.url || "");
+      const saveResult = await myRedisCache.set(key, res.data);
+      if (saveResult) console.log(`[${correlationId}] Saved`, key);
+    } catch (error) {
+      console.error(error);
+    }
+    return res.data;
+  }
+
   private async _handleGetRequest(url: string, correlationId?: string) {
     return this.httpClient
       .get(url)
@@ -173,9 +173,12 @@ export class CmsService {
       console.log(`[${corrleationId}] Miss`, key);
       return this._handleGetRequest(url, corrleationId);
     }
+    const expirationTime =
+      BackgroundExpirationTimeInSeconds + getRandomInt(0, 10); // Reduce the likelyhood of simultanious updates
+    console.log(expirationTime);
     const { hasExpired, elapsed } = this._checkExpiration(
       cacheResult.meta?.savedAt as Date,
-      BackgroundExpirationTimeInSeconds
+      expirationTime
     );
     if (hasExpired) {
       console.log(`[${corrleationId}] Expired after ${elapsed}s : ${key}`);
@@ -192,7 +195,10 @@ export class CmsService {
     return cacheResult.value;
   }
 
-  public async getContent(id: number, options?: GetContentOptions) {
+  public async getContent(
+    id: number,
+    options?: GetContentOptions
+  ): Promise<any> {
     const url =
       "/api/episerver/" +
       this.config.version +
@@ -202,7 +208,10 @@ export class CmsService {
     return this._readThroughGetRequest(url, options?.correlationId);
   }
 
-  public async getContentChildren(id: number, options?: GetContentOptions) {
+  public async getContentChildren(
+    id: number,
+    options?: GetContentOptions
+  ): Promise<any[]> {
     const url =
       "/api/episerver/" +
       this.config.version +
@@ -213,13 +222,19 @@ export class CmsService {
     return this._readThroughGetRequest(url, options?.correlationId);
   }
 
+  public async getPage(id: number, options?: GetContentOptions) {
+    return [await this.getContent(id, options)].find(isPage);
+  }
+
+  public async getPageChildren(id: number, options?: GetContentOptions) {
+    return (await this.getContentChildren(id, options)).filter(isPage);
+  }
+
   public async getPageTree(
     rootPageId: number,
     options?: GetContentOptions
   ): Promise<GetPageTreeResponse> {
-    const rootContent = [await this.getContent(rootPageId, options)].find(
-      isPage
-    );
+    const rootContent = await this.getPage(rootPageId, options);
     let count = 0;
     let root: PageTree = {
       data: rootContent || null,

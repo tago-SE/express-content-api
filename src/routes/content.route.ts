@@ -6,7 +6,7 @@ const router = express.Router();
 
 router.get("/sites", async (req, res, next) => {
   return new ContentController()
-    .getWebsites()
+    .getWebsites(req.query.correlationId as string)
     .then((response) => res.status(response.status).send(response.body))
     .catch((error) => next(error));
 });
@@ -15,7 +15,8 @@ router.get("/:id", (req, res, next) => {
   return new ContentController()
     .getContent(
       Number(req.params.id),
-      stringToBoolean(req.query.editmode as string)
+      stringToBoolean(req.query.editmode as string),
+      req.query.correlationId as string
     )
     .then((response) => res.status(response.status).send(response.body))
     .catch((error) => next(error));
@@ -25,7 +26,8 @@ router.get("/:id/children", async (req, res, next) => {
   return new ContentController()
     .getContentChildren(
       Number(req.params.id),
-      stringToBoolean(req.query.editmode as string)
+      stringToBoolean(req.query.editmode as string),
+      req.query.correlationId as string
     )
     .then((response) => res.status(response.status).send(response.body))
     .catch((error) => next(error));
@@ -54,19 +56,22 @@ router.get("/pages/:id/array", async (req, res, next) => {
 });
 
 router.get("/pages/:id/children", async (req, res, next) => {
-  const controller = new ContentController();
-  const response = await controller.getPageChildren(
-    Number(req.params.id),
-    stringToBoolean(req.query.editmode as string)
-  );
-  return res.send(response);
+  return new ContentController()
+    .getPageChildren(
+      Number(req.params.id),
+      stringToBoolean(req.query.editmode as string),
+      req.query.correlationId as string
+    )
+    .then((response) => res.status(response.status).send(response.body))
+    .catch((error) => next(error));
 });
 
 router.get("/pages/:id", async (req, res, next) => {
   return new ContentController()
     .getPage(
       Number(req.params.id),
-      stringToBoolean(req.query.editmode as string)
+      stringToBoolean(req.query.editmode as string),
+      req.query.correlationId as string
     )
     .then((response) => res.status(response.status).send(response.body))
     .catch((error) => next(error));
