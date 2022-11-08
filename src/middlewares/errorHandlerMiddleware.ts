@@ -8,6 +8,7 @@ export function errorHandlerMiddleware(
   res: Response,
   next: NextFunction
 ): Response | void {
+  console.log("ERROR COUGH");
   if (error instanceof ValidateError) {
     console.warn(`Caught Validation Error for ${req.path}:`, error.fields);
     return res.status(422).json({

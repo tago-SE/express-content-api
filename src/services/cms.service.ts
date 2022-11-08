@@ -1,5 +1,4 @@
 import pThrottle from "p-throttle";
-import pLimit from "p-limit";
 import { AxiosError, AxiosRequestConfig, AxiosResponse } from "axios";
 import { differenceInSeconds } from "date-fns";
 
@@ -20,6 +19,16 @@ export interface GetContentOptions {
   editmode?: boolean;
   expand?: boolean;
   correlationId?: string;
+}
+
+export interface GetPageTreeResponse {
+  root: PageTree;
+  count: number;
+}
+
+export interface GetPageTreeAsArray {
+  pages: any[];
+  count: number;
 }
 
 export interface PageTree {
@@ -74,11 +83,14 @@ export class CmsService {
     return _url.hostname + _url.pathname + _url.search;
   }
 
-  private async _handleSuccess(res: AxiosResponse<any, any>) {
+  private async _handleSuccess(
+    res: AxiosResponse<any, any>,
+    correlationId?: string
+  ) {
     try {
       const key = this.getCacheKey(res.config.url || "");
       const saveResult = await myRedisCache.set(key, res.data);
-      if (saveResult) console.log("Saved", key);
+      if (saveResult) console.log(`[${correlationId}] Saved`, key);
     } catch (error) {
       console.error(error);
     }
@@ -100,19 +112,24 @@ export class CmsService {
     return status >= 400 && status <= 404;
   }
 
-  private async _handleError(error: AxiosError<any>) {
+  private async _handleError(error: AxiosError<any>, correlationId?: string) {
     console.error(error.toString());
     if (error.isAxiosError) {
       const requestConfig = error.config as AxiosRequestConfig<any>;
       const key = this.getCacheKey(requestConfig.url || "");
       if (!!error.response) {
         if (this._shouldRemoveOnError(error.response)) {
+          // Replace with getset ?
+          const old = await myRedisCache.get(key);
           const saveResult = await myRedisCache.set(key, null);
-          if (saveResult) console.log("Removed", key);
+          if (saveResult) {
+            if (old.cacheHit) console.log(`[${correlationId}] Removed`, key);
+          }
+          //
           return Promise.resolve(null);
         } else {
           console.warn(
-            "The error could not be parsed properly. Perhaps the server is down?"
+            `[${correlationId}] The error could not be parsed properly. Perhaps the server is down`
           );
           console.log(
             error.response.status,
@@ -127,11 +144,11 @@ export class CmsService {
     return Promise.reject(error);
   }
 
-  private async _handleGetRequest(url: string) {
+  private async _handleGetRequest(url: string, correlationId?: string) {
     return this.httpClient
       .get(url)
-      .then((res) => this._handleSuccess(res))
-      .catch((error) => this._handleError(error));
+      .then((res) => this._handleSuccess(res, correlationId))
+      .catch((error) => this._handleError(error, correlationId));
   }
 
   private _checkExpiration(savedAt: Date, expirationTimeInSeconds: number) {
@@ -149,29 +166,29 @@ export class CmsService {
     };
   }
 
-  private async _readThroughGetRequest(url: string) {
+  private async _readThroughGetRequest(url: string, corrleationId?: string) {
     const key = this.getCacheKey(url);
     const cacheResult = await myRedisCache.get(key);
     if (!cacheResult.cacheHit) {
-      return this._handleGetRequest(url);
+      console.log(`[${corrleationId}] Miss`, key);
+      return this._handleGetRequest(url, corrleationId);
     }
     const { hasExpired, elapsed } = this._checkExpiration(
       cacheResult.meta?.savedAt as Date,
       BackgroundExpirationTimeInSeconds
     );
     if (hasExpired) {
-      console.log(`Expired after ${elapsed}s : ${key}`);
+      console.log(`[${corrleationId}] Expired after ${elapsed}s : ${key}`);
       setImmediate(async () => {
         try {
           await myRedisCache.set(key, cacheResult.value); // touch timestamp to prevent spam
-          await throttle(() => this._handleGetRequest(url))();
+          await throttle(() => this._handleGetRequest(url, corrleationId))();
         } catch (error) {
           console.error(error);
         }
       });
-    } else {
-      console.log("Hit", key);
     }
+    console.log(`[${corrleationId}] Hit`, key);
     return cacheResult.value;
   }
 
@@ -182,7 +199,7 @@ export class CmsService {
       "/content/" +
       id +
       getContentOptionsToQueryParams(options);
-    return this._readThroughGetRequest(url);
+    return this._readThroughGetRequest(url, options?.correlationId);
   }
 
   public async getContentChildren(id: number, options?: GetContentOptions) {
@@ -193,21 +210,27 @@ export class CmsService {
       id +
       "/children" +
       getContentOptionsToQueryParams(options);
-    return this._readThroughGetRequest(url);
+    return this._readThroughGetRequest(url, options?.correlationId);
   }
 
-  public async getPageTree(rootPageId: number, options?: GetContentOptions) {
+  public async getPageTree(
+    rootPageId: number,
+    options?: GetContentOptions
+  ): Promise<GetPageTreeResponse> {
     const rootContent = [await this.getContent(rootPageId, options)].find(
       isPage
     );
-    const root: PageTree = {
+    let count = 0;
+    let root: PageTree = {
       data: rootContent || null,
       children: [],
     };
     if (root.data) {
       let q = [root];
       while (q.length > 0) {
-        const node = q.pop() as PageTree;
+        const node = q.pop();
+        if (!node) continue;
+        count++;
         const children = (
           await this.getContentChildren(node.data.contentLink.id, options)
         ).filter(isPage);
@@ -220,7 +243,28 @@ export class CmsService {
         }
       }
     }
-    return root;
+    return { root, count };
+  }
+
+  public async getPageTreeAsArray(
+    rootPageId: number,
+    options?: GetContentOptions
+  ): Promise<GetPageTreeAsArray> {
+    let resultList = [];
+    const result = await this.getPageTree(rootPageId, options);
+    if (result.root) {
+      let q = [result.root];
+      while (q.length > 0) {
+        const node = q.pop();
+        if (!node) continue;
+        resultList.push(node.data);
+        for (let child of node.children) q.push(child);
+      }
+    }
+    return {
+      pages: resultList,
+      count: resultList.length,
+    };
   }
 
   public async getWebsites() {

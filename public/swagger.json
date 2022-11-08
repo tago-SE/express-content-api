@@ -50,6 +50,94 @@
 				],
 				"type": "object",
 				"additionalProperties": false
+			},
+			"PageTree": {
+				"properties": {
+					"data": {
+						"nullable": true
+					},
+					"children": {
+						"items": {
+							"$ref": "#/components/schemas/PageTree"
+						},
+						"type": "array"
+					}
+				},
+				"required": [
+					"data",
+					"children"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"GetPageTreeResponse": {
+				"properties": {
+					"root": {
+						"$ref": "#/components/schemas/PageTree"
+					},
+					"count": {
+						"type": "number",
+						"format": "double"
+					}
+				},
+				"required": [
+					"root",
+					"count"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"ApiResponse_GetPageTreeResponse_": {
+				"properties": {
+					"status": {
+						"type": "number",
+						"format": "double"
+					},
+					"body": {
+						"$ref": "#/components/schemas/GetPageTreeResponse"
+					}
+				},
+				"required": [
+					"status",
+					"body"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"GetPageTreeAsArray": {
+				"properties": {
+					"pages": {
+						"items": {},
+						"type": "array"
+					},
+					"count": {
+						"type": "number",
+						"format": "double"
+					}
+				},
+				"required": [
+					"pages",
+					"count"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"ApiResponse_GetPageTreeAsArray_": {
+				"properties": {
+					"status": {
+						"type": "number",
+						"format": "double"
+					},
+					"body": {
+						"$ref": "#/components/schemas/GetPageTreeAsArray"
+					}
+				},
+				"required": [
+					"status",
+					"body"
+				],
+				"type": "object",
+				"additionalProperties": false
 			}
 		},
 		"securitySchemes": {}
@@ -119,6 +207,14 @@
 						"schema": {
 							"type": "boolean"
 						}
+					},
+					{
+						"in": "query",
+						"name": "correlationId",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
 					}
 				]
 			}
@@ -155,6 +251,14 @@
 						"required": false,
 						"schema": {
 							"type": "boolean"
+						}
+					},
+					{
+						"in": "query",
+						"name": "correlationId",
+						"required": false,
+						"schema": {
+							"type": "string"
 						}
 					}
 				]
@@ -197,7 +301,52 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/ApiResponse_any_"
+									"$ref": "#/components/schemas/ApiResponse_GetPageTreeResponse_"
+								}
+							}
+						}
+					}
+				},
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "id",
+						"required": true,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					},
+					{
+						"in": "query",
+						"name": "editmode",
+						"required": false,
+						"schema": {
+							"type": "boolean"
+						}
+					},
+					{
+						"in": "query",
+						"name": "correlationId",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/content/pages/{id}/array": {
+			"get": {
+				"operationId": "GetPageTreeAsArray",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_GetPageTreeAsArray_"
 								}
 							}
 						}
@@ -264,6 +413,14 @@
 						"schema": {
 							"type": "boolean"
 						}
+					},
+					{
+						"in": "query",
+						"name": "correlationId",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
 					}
 				]
 			}
@@ -298,6 +455,14 @@
 						"required": false,
 						"schema": {
 							"type": "boolean"
+						}
+					},
+					{
+						"in": "query",
+						"name": "correlationId",
+						"required": false,
+						"schema": {
+							"type": "string"
 						}
 					}
 				]

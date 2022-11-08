@@ -42,6 +42,17 @@ router.get("/pages/:id/tree", async (req, res, next) => {
     .catch((error) => next(error));
 });
 
+router.get("/pages/:id/array", async (req, res, next) => {
+  return new ContentController()
+    .getPageTreeAsArray(
+      Number(req.params.id),
+      stringToBoolean(req.query.editmode as string),
+      req.query.correlationId as string
+    )
+    .then((response) => res.status(response.status).send(response.body))
+    .catch((error) => next(error));
+});
+
 router.get("/pages/:id/children", async (req, res, next) => {
   const controller = new ContentController();
   const response = await controller.getPageChildren(

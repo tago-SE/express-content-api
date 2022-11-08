@@ -49,6 +49,28 @@ export class RedisCache implements ICache {
     return result === "OK";
   }
 
+  public async getSet(key: string, value: any, options?: ISetOptions) {
+    // TODO: Implement getset command
+    // const redisSetOption = {
+    //   EX: typeof options?.ttl === "number" ? options.ttl : this.config.ttl,
+    // };
+    // const meta: CachedMetaData = {
+    //   key,
+    //   savedAt: new Date(),
+    //   setOption: redisSetOption,
+    // };
+    // const dataToSave: CachedData = {
+    //   value: value,
+    //   meta: meta,
+    // };
+    // const result = await this.client.getSet(
+    //   key,
+    //   JSON.stringify(dataToSave),
+    //   redisSetOption
+    // );
+    // return result === "OK";
+  }
+
   public async get(key: string): Promise<GetCachedValue> {
     await this.ensureConnected();
     return await this.client.get(key).then((str) => {
