@@ -1,8 +1,11 @@
 import { default as express, Application } from "express";
 import { default as swaggerUi } from "swagger-ui-express";
 import { router } from "./routes/index.js";
-import { loggerMiddleware } from "./middlewares/logger.middleware.js";
-import { errorHandler } from "./middlewares/errorHandler.js";
+import {
+  loggerMiddleware,
+  errorHandlerMiddleware,
+  appendCorrelationIdMiddleware,
+} from "./middlewares/index.js";
 
 const PORT = process.env.PORT || 8000;
 
@@ -21,8 +24,9 @@ app.use(
     },
   })
 );
+app.use(appendCorrelationIdMiddleware);
 app.use(router);
-app.use(errorHandler);
+app.use(errorHandlerMiddleware);
 
 app.listen(PORT, () => {
   console.log("Server is running on port", PORT);

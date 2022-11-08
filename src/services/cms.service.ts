@@ -19,6 +19,7 @@ interface Config {
 export interface GetContentOptions {
   editmode?: boolean;
   expand?: boolean;
+  correlationId?: string;
 }
 
 export interface PageTree {
@@ -196,7 +197,6 @@ export class CmsService {
   }
 
   public async getPageTree(rootPageId: number, options?: GetContentOptions) {
-    console.log(rootPageId, options);
     const rootContent = [await this.getContent(rootPageId, options)].find(
       isPage
     );

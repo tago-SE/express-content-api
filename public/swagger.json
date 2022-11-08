@@ -221,6 +221,14 @@
 						"schema": {
 							"type": "boolean"
 						}
+					},
+					{
+						"in": "query",
+						"name": "correlationId",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
 					}
 				]
 			}

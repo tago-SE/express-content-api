@@ -35,7 +35,8 @@ router.get("/pages/:id/tree", async (req, res, next) => {
   return new ContentController()
     .getPageTree(
       Number(req.params.id),
-      stringToBoolean(req.query.editmode as string)
+      stringToBoolean(req.query.editmode as string),
+      req.query.correlationId as string
     )
     .then((response) => res.status(response.status).send(response.body))
     .catch((error) => next(error));

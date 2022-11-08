@@ -1,8 +1,8 @@
-import express, { Response, Request, NextFunction } from "express";
+import { Response, Request, NextFunction } from "express";
 import { ValidateError } from "tsoa";
 import { HttpError } from "../models/http.error/index.js";
 
-export function errorHandler(
+export function errorHandlerMiddleware(
   error: any,
   req: Request,
   res: Response,
@@ -25,6 +25,5 @@ export function errorHandler(
       details: error.toString(),
     });
   }
-
   next();
 }

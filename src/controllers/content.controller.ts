@@ -51,9 +51,13 @@ export class ContentController {
   @Get("/pages/{id}/tree")
   public async getPageTree(
     @Path() id: number,
-    @Query() editmode?: boolean
+    @Query() editmode?: boolean,
+    @Query() correlationId?: string
   ): Promise<ApiResponse<any>> {
-    const content = await cmsService.getPageTree(id, { editmode });
+    const content = await cmsService.getPageTree(id, {
+      editmode,
+      correlationId,
+    });
     return {
       status: !!content.data && content.children.length > 0 ? 200 : 404,
       body: content,
