@@ -77,18 +77,26 @@ export class CmsService {
     try {
       const key = this.getCacheKey(res.config.url || "");
       const saveResult = await myRedisCache.set(key, res.data);
-      if (saveResult) {
-        console.log("Saved", key);
-      }
+      if (saveResult) console.log("Saved", key);
     } catch (error) {
       console.error(error);
     }
     return res.data;
   }
 
-  private _isCmsErrorResponse(response: AxiosResponse<any, any>) {
-    // TODO: Ensure that the body has the properties that we seek
-    // e.g code, message, details
+  private _shouldRemoveOnError(response: AxiosResponse<any, any>) {
+    // TODO: Check if the error response view model matches what is sent from EPI Server CMS rather
+    // than checking the content-type of the header etc
+    if (!response) return false;
+    const status = response.status;
+    const { ["content-type"]: headerContentType } = response.headers;
+    if (
+      response.status === 404 &&
+      !headerContentType?.includes("application/json")
+    ) {
+      return false; // If the 404 response is not a json it means that the server is likely down
+    }
+    return status >= 400 && status <= 404;
   }
 
   private async _handleError(error: AxiosError<any>) {
@@ -96,19 +104,11 @@ export class CmsService {
     if (error.isAxiosError) {
       const requestConfig = error.config as AxiosRequestConfig<any>;
       const key = this.getCacheKey(requestConfig.url || "");
-      if (!!error.response && !!error.response.status) {
-        const responseStatus = error.response.status;
-        const { ["content-type"]: headerContentType } = error.response.headers;
-        // How to better ensure that it is being removed for the correct reason
-        if (headerContentType?.includes("application/json")) {
-          if (responseStatus >= 400 && responseStatus <= 404) {
-            // Error codes between 400-404 cause the underlying data to be considered as removed
-            const saveResult = await myRedisCache.set(key, null);
-            if (saveResult) {
-              console.log("Removed", key);
-            }
-            return Promise.resolve(null);
-          }
+      if (!!error.response) {
+        if (this._shouldRemoveOnError(error.response)) {
+          const saveResult = await myRedisCache.set(key, null);
+          if (saveResult) console.log("Removed", key);
+          return Promise.resolve(null);
         } else {
           console.warn(
             "The error could not be parsed properly. Perhaps the server is down?"
@@ -148,7 +148,7 @@ export class CmsService {
     };
   }
 
-  private async readThroughGetRequest(url: string) {
+  private async _readThroughGetRequest(url: string) {
     const key = this.getCacheKey(url);
     const cacheResult = await myRedisCache.get(key);
     if (!cacheResult.cacheHit) {
@@ -181,7 +181,7 @@ export class CmsService {
       "/content/" +
       id +
       getContentOptionsToQueryParams(options);
-    return this.readThroughGetRequest(url);
+    return this._readThroughGetRequest(url);
   }
 
   public async getContentChildren(id: number, options?: GetContentOptions) {
@@ -192,7 +192,7 @@ export class CmsService {
       id +
       "/children" +
       getContentOptionsToQueryParams(options);
-    return this.readThroughGetRequest(url);
+    return this._readThroughGetRequest(url);
   }
 
   public async getPageTree(rootPageId: number, options?: GetContentOptions) {
