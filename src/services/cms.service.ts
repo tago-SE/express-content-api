@@ -97,24 +97,35 @@ export class CmsService {
       .catch((error) => this.handleError(error));
   }
 
+  private checkExpiration(savedAt: Date, expirationTimeInSeconds: number) {
+    if (!savedAt)
+      return {
+        hasExpired: false,
+        elapsed: 0,
+      };
+    const elapsed = Math.abs(
+      differenceInSeconds(new Date(), new Date(savedAt))
+    );
+    return {
+      hasExpired: elapsed > expirationTimeInSeconds,
+      elapsed,
+    };
+  }
+
   private async readThroughGetRequest(url: string) {
     const key = this.getCacheKey(url);
     const cacheResult = await myRedisCache.get(key);
     if (!cacheResult.cacheHit) {
       return this.handleGetRequest(url);
     }
-    const elapsed =
-      Math.abs(
-        differenceInSeconds(
-          new Date(),
-          new Date(cacheResult?.meta?.savedAt as Date)
-        )
-      ) || 0;
-    const hasExpired = elapsed > BackgroundExpirationTimeInSeconds;
+    const { hasExpired, elapsed } = this.checkExpiration(
+      cacheResult.meta?.savedAt as Date,
+      BackgroundExpirationTimeInSeconds
+    );
     if (hasExpired) {
       console.log(`Expired after ${elapsed}s : ${key}`);
       setImmediate(async () => {
-        await myRedisCache.set(key, cacheResult.value); // touched before update to prevent spam
+        await myRedisCache.set(key, cacheResult.value); // touch timestamp to prevent spam
         await this.handleGetRequest(url);
       });
     } else {
