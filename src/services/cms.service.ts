@@ -5,6 +5,7 @@ import { removeTrailingSlashes } from "../utils/strings/removeTrailingSlashes.js
 import { HttpClient } from "../clients/axios.client.js";
 import { RedisCache } from "./cache/RedisCache.js";
 import { getRandomInt } from "../utils/random/getRandomInt.js";
+import { isPage } from "utils/epi.js";
 
 const EXPAND_QUERY_KEY = "expand";
 const EDITMODE_QUERY_KEY = "epieditmode";
@@ -54,11 +55,6 @@ const throttle = pThrottle({
 });
 
 const myRedisCache = new RedisCache({ ttl: 1 * 24 * 60 * 60 });
-
-const isPage = (content: any) => {
-  if (!content) return false;
-  return content.contentType[0] === "Page";
-};
 
 export class CmsService {
   public readonly config: Config;
